@@ -1,0 +1,69 @@
+﻿using PrivacyGateway.Api.Pipeline.Abstractions;
+using PrivacyGateway.Api.Pipeline.Context;
+using PrivacyGateway.Api.Services;
+
+namespace PrivacyGateway.Api.Pipeline.Steps;
+
+public sealed class OutputGuardStep : IPipelineStep
+{
+    private readonly PiiDetector _detector;
+    private readonly Sanitizer _sanitizer;
+    private readonly ILogger<OutputGuardStep> _logger;
+    private readonly OutputGuardOptions _options;
+
+    public OutputGuardStep(
+        PiiDetector detector,
+        Sanitizer sanitizer,
+        ILogger<OutputGuardStep> logger,
+        OutputGuardOptions options)
+    {
+        _detector = detector;
+        _sanitizer = sanitizer;
+        _logger = logger;
+        _options = options;
+    }
+
+    public string Name => "OutputGuard";
+    public int Order => 70;
+    public PipelineMode AppliesTo => PipelineMode.Chat;
+
+    public Task ExecuteAsync(PipelineContext context, CancellationToken ct)
+    {
+        if (context.IsTerminated) return Task.CompletedTask;
+        if (string.IsNullOrWhiteSpace(context.AiResponse)) return Task.CompletedTask;
+
+        // Find alle PII-findings i AI-svaret
+        var allFindings = _detector.FindAll(context.AiResponse);
+
+        // Filtrer kun de typer som OutputGuard er konfigureret til at håndtere
+        var relevantFindings = allFindings
+            .Where(f => _options.BlockedTypes.Contains(f.Type))
+            .ToList();
+
+        if (relevantFindings.Count == 0) return Task.CompletedTask;
+
+        // Log en advarsel — AI'en forsøgte at lække PII
+        _logger.LogWarning(
+            "[OutputGuard] CorrelationId={CorrelationId} — AI-svar indeholdt {Count} PII-fund: {Types}",
+            context.CorrelationId,
+            relevantFindings.Count,
+            string.Join(", ", relevantFindings.Select(f => f.Type).Distinct())
+        );
+
+        // Hvis CPR findes i svaret og BlockOnCpr er sat, bloker hele svaret
+        if (_options.BlockOnCpr && relevantFindings.Any(f => f.Type == "CPR"))
+        {
+            _logger.LogError(
+                "[OutputGuard] CorrelationId={CorrelationId} — CPR fundet i AI-svar. Svaret blokeres.",
+                context.CorrelationId
+            );
+
+            context.AiResponse = "[SVAR BLOKERET: AI-svaret indeholdt følsomme personoplysninger]";
+            return Task.CompletedTask;
+        }
+
+        // Ellers: sanitér de relevante findings
+        context.AiResponse = _sanitizer.Sanitize(context.AiResponse, relevantFindings);
+        return Task.CompletedTask;
+    }
+}
