@@ -17,6 +17,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<PiiDetector>();
 builder.Services.AddSingleton<Sanitizer>();
 builder.Services.AddSingleton<PolicyEngine>();
+builder.Services.AddSingleton<AuditService>();
 
 builder.Services.AddSingleton(new OutputGuardOptions
 {
@@ -79,10 +80,12 @@ app.UseHttpsRedirection();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // POST /analyze: kører pipeline i Analyze-mode (ingen AI-kald)
-app.MapPost("/analyze", async (AnalyzeRequest req, IngestionPipeline pipeline, CancellationToken ct) =>
+app.MapPost("/analyze", async (AnalyzeRequest req, IngestionPipeline pipeline, AuditService audit, CancellationToken ct) =>
 {
     var context = new PipelineContext(PipelineMode.Analyze, req.Text);
     await pipeline.RunAsync(context, ct);
+
+    audit.Record(context);
 
     if (context.FailureStatusCode.HasValue)
         return Results.Problem(
@@ -100,10 +103,12 @@ app.MapPost("/analyze", async (AnalyzeRequest req, IngestionPipeline pipeline, C
 });
 
 // POST /chat: kører pipeline i Chat-mode (inkl. AI-kald og OutputGuard)
-app.MapPost("/chat", async (ChatRequest req, IngestionPipeline pipeline, CancellationToken ct) =>
+app.MapPost("/chat", async (ChatRequest req, IngestionPipeline pipeline, AuditService audit, CancellationToken ct) =>
 {
     var context = new PipelineContext(PipelineMode.Chat, req.Text);
     await pipeline.RunAsync(context, ct);
+
+    audit.Record(context);
 
     if (context.FailureStatusCode.HasValue)
         return Results.Problem(
@@ -119,6 +124,16 @@ app.MapPost("/chat", async (ChatRequest req, IngestionPipeline pipeline, Cancell
         Findings: context.Findings,
         AiResponse: context.AiResponse
     ));
+});
+
+// GET /audit: returnerer alle audit-log poster (nyeste først)
+app.MapGet("/audit", (AuditService audit) =>
+{
+    var entries = audit.GetAll()
+        .OrderByDescending(e => e.Timestamp)
+        .ToList();
+
+    return Results.Ok(entries);
 });
 
 app.Run();
