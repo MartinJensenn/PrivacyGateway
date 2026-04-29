@@ -9,34 +9,73 @@ public sealed class PolicyEngine
         string Reason,
         IReadOnlySet<string> RequiredSanitizationTypes);
 
+    // PII-typer der altid medfører BLOCK, uanset hvad der ellers er i teksten
+    private static readonly IReadOnlySet<string> BlockedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        PiiDetector.Cpr,
+        PiiDetector.Iban,
+        PiiDetector.CreditCard,
+        PiiDetector.Passport,
+        PiiDetector.DkAccount,
+    };
+
+    // PII-typer der medfører ALLOW med påkrævet sanitering
+    private static readonly IReadOnlySet<string> SanitizeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        PiiDetector.Email,
+        PiiDetector.Phone,
+        PiiDetector.Cvr,
+        PiiDetector.IpAddress,
+        PiiDetector.Url,
+    };
+
     public PolicyDecision Decide(IReadOnlyList<Finding> findings)
     {
-        var required = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        // MVP: CPR => BLOCK
-        if (findings.Any(f => string.Equals(f.Type, PiiDetector.Cpr, StringComparison.OrdinalIgnoreCase)))
+        if (findings.Count == 0)
         {
             return new PolicyDecision(
-                Decision: "BLOCK",
-                Reason: "CPR detected (MVP policy)",
-                RequiredSanitizationTypes: required
+                Decision: "ALLOW",
+                Reason: "No PII detected",
+                RequiredSanitizationTypes: new HashSet<string>()
             );
         }
 
-        // Hvis EMAIL/PHONE findes, så ALLOW men kræv sanitization
-        if (findings.Any(f => string.Equals(f.Type, PiiDetector.Email, StringComparison.OrdinalIgnoreCase)))
-            required.Add(PiiDetector.Email);
+        var foundTypes = findings
+            .Select(f => f.Type)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        if (findings.Any(f => string.Equals(f.Type, PiiDetector.Phone, StringComparison.OrdinalIgnoreCase)))
-            required.Add(PiiDetector.Phone);
+        // Tjek for BLOCK-typer — beskriv præcis hvilke der udløste blokering
+        var blockedFound = foundTypes
+            .Where(t => BlockedTypes.Contains(t))
+            .OrderBy(t => t)
+            .ToList();
 
-        var reason = required.Count > 0
-            ? $"PII detected; sanitization required: {string.Join(", ", required)}"
-            : "No PII detected";
+        if (blockedFound.Count > 0)
+        {
+            var reason = blockedFound.Count == 1
+                ? $"{blockedFound[0]} detected — request blocked by policy"
+                : $"Multiple sensitive types detected ({string.Join(", ", blockedFound)}) — request blocked by policy";
+
+            return new PolicyDecision(
+                Decision: "BLOCK",
+                Reason: reason,
+                RequiredSanitizationTypes: new HashSet<string>()
+            );
+        }
+
+        // Saml de typer som kræver sanitering
+        var required = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var type in foundTypes.Where(t => SanitizeTypes.Contains(t)))
+            required.Add(type);
+
+        var sanitizeReason = required.Count > 0
+            ? $"PII detected — sanitization required: {string.Join(", ", required.OrderBy(t => t))}"
+            : "No actionable PII detected";
 
         return new PolicyDecision(
             Decision: "ALLOW",
-            Reason: reason,
+            Reason: sanitizeReason,
             RequiredSanitizationTypes: required
         );
     }

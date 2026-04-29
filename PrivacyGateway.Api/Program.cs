@@ -1,4 +1,4 @@
-using System.ClientModel;
+ï»¿using System.ClientModel;
 using OpenAI.Chat;
 using PrivacyGateway.Api.Models;
 using PrivacyGateway.Api.Services;
@@ -27,23 +27,21 @@ builder.Services.AddSingleton(new OutputGuardOptions
     BlockOnCpr = true
 });
 
-builder.Services.AddSingleton<IPipelineStep, OutputGuardStep>();
-
 // Pipeline og steps
 builder.Services.AddSingleton<IngestionPipeline>();
 
-// Registrér steps i rækkefølge (order bestemmes af IPipelineStep.Order)
+// Registrï¿½r steps i rï¿½kkefï¿½lge (order bestemmes af IPipelineStep.Order)
 builder.Services.AddSingleton<IPipelineStep, ExtractTextStep>();
 builder.Services.AddSingleton<IPipelineStep, DetectPiiStep>();
 builder.Services.AddSingleton<IPipelineStep, EvaluatePolicyStep>();
 builder.Services.AddSingleton<IPipelineStep, SanitizeStep>();
 builder.Services.AddSingleton<IPipelineStep, EnforceStep>();
 
-// CallAiStep er "valgfri" i den forstand, at hvis den ikke er registreret, så vil /chat stadig virke - det vil bare returnere en fejlmeddelelse om at AI ikke er konfigureret, i stedet for at crashe eller returnere 500.
+// CallAiStep er "valgfri" i den forstand, at hvis den ikke er registreret, sï¿½ vil /chat stadig virke - det vil bare returnere en fejlmeddelelse om at AI ikke er konfigureret, i stedet for at crashe eller returnere 500.
 builder.Services.AddSingleton<IPipelineStep, CallAiStep>();
 builder.Services.AddSingleton<IPipelineStep, OutputGuardStep>(); // Til output guard
 
-// OpenAI ChatClient (valgfri: app kan starte uden key, så /analyze virker)
+// OpenAI ChatClient (valgfri: app kan starte uden key, sï¿½ /analyze virker)
 string model =
     builder.Configuration["OpenAI:Model"]
     ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
