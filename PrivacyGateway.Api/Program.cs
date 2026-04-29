@@ -22,7 +22,16 @@ builder.Services.AddSingleton(new OutputGuardOptions
 {
     BlockedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "EMAIL", "PHONE", "CPR"
+        PiiDetector.Email,
+        PiiDetector.Phone,
+        PiiDetector.Cpr,
+        PiiDetector.Iban,
+        PiiDetector.CreditCard,
+        PiiDetector.Passport,
+        PiiDetector.DkAccount,
+        PiiDetector.IpAddress,
+        PiiDetector.Url,
+        PiiDetector.Cvr,
     },
     BlockOnCpr = true
 });
@@ -69,58 +78,46 @@ app.UseHttpsRedirection();
 // Hurtig redirect til Swagger
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
-// POST /analyze: scanner + sanitizer + policy (ingen AI-kald)
-app.MapPost("/analyze", (AnalyzeRequest req, PiiDetector detector, Sanitizer sanitizer, PolicyEngine policy) =>
+// POST /analyze: kører pipeline i Analyze-mode (ingen AI-kald)
+app.MapPost("/analyze", async (AnalyzeRequest req, IngestionPipeline pipeline, CancellationToken ct) =>
 {
-    var findings = detector.FindAll(req.Text);
-    var sanitized = sanitizer.Sanitize(req.Text, findings);
-    var policyDecision = policy.Decide(findings);
+    var context = new PipelineContext(PipelineMode.Analyze, req.Text);
+    await pipeline.RunAsync(context, ct);
+
+    if (context.FailureStatusCode.HasValue)
+        return Results.Problem(
+            title: "Pipeline error",
+            detail: string.Join("; ", context.Errors),
+            statusCode: context.FailureStatusCode.Value
+        );
 
     return Results.Ok(new AnalyzeResponse(
-        Decision: policyDecision.Decision,
-        Reason: policyDecision.Reason,
-        SanitizedText: sanitized,
-        Findings: findings
+        Decision: context.Decision,
+        Reason: context.Reason,
+        SanitizedText: context.SanitizedText,
+        Findings: context.Findings
     ));
 });
 
-// POST /chat: samme pipeline, men kun AI-kald hvis ALLOW
-app.MapPost("/chat", async (ChatRequest req, IServiceProvider services, PiiDetector detector, Sanitizer sanitizer, PolicyEngine policy) =>
+// POST /chat: kører pipeline i Chat-mode (inkl. AI-kald og OutputGuard)
+app.MapPost("/chat", async (ChatRequest req, IngestionPipeline pipeline, CancellationToken ct) =>
 {
-    var findings = detector.FindAll(req.Text);
-    var sanitized = sanitizer.Sanitize(req.Text, findings);
-    var policyDecision = policy.Decide(findings);
+    var context = new PipelineContext(PipelineMode.Chat, req.Text);
+    await pipeline.RunAsync(context, ct);
 
-    if (policyDecision.Decision == "BLOCK")
-    {
-        return Results.Ok(new ChatResponse(
-            Decision: policyDecision.Decision,
-            Reason: policyDecision.Reason,
-            SanitizedText: sanitized,
-            Findings: findings,
-            AiResponse: null
-        ));
-    }
-
-    var client = services.GetService<ChatClient>();
-    if (client is null)
-    {
+    if (context.FailureStatusCode.HasValue)
         return Results.Problem(
-            title: "OpenAI not configured",
-            detail: "Set OPENAI_API_KEY (env var) or OpenAI:ApiKey in appsettings.json to enable /chat."
+            title: "Pipeline error",
+            detail: string.Join("; ", context.Errors),
+            statusCode: context.FailureStatusCode.Value
         );
-    }
-
-    // Send KUN sanitized text til AI
-    var completion = await client.CompleteChatAsync(sanitized);
-    var aiText = completion.Value.Content.FirstOrDefault()?.Text ?? "";
 
     return Results.Ok(new ChatResponse(
-        Decision: policyDecision.Decision,
-        Reason: policyDecision.Reason,
-        SanitizedText: sanitized,
-        Findings: findings,
-        AiResponse: aiText
+        Decision: context.Decision,
+        Reason: context.Reason,
+        SanitizedText: context.SanitizedText,
+        Findings: context.Findings,
+        AiResponse: context.AiResponse
     ));
 });
 
