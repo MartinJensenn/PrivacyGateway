@@ -26,7 +26,7 @@ public sealed class FileTextExtractor
         return ext.ToLowerInvariant() switch
         {
             ".pdf" => ExtractPdf(stream, fileName!),
-            _      => ExtractPlainText(stream, fileName!)
+            _ => ExtractPlainText(stream, fileName!)
         };
     }
 
