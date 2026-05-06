@@ -13,6 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
 // Vores services
 builder.Services.AddSingleton<PiiDetector>();
 builder.Services.AddSingleton<Sanitizer>();
@@ -35,7 +41,12 @@ builder.Services.AddSingleton(new OutputGuardOptions
         PiiDetector.Url,
         PiiDetector.Cvr,
     },
-    BlockOnCpr = true
+    BlockOnCpr = true,
+    BlockOnPassport = true,
+    BlockOnCreditCard = true,
+    BlockOnDkAccount = true,
+    BlockOnIban = true
+
 });
 
 // Pipeline og steps
@@ -47,6 +58,7 @@ builder.Services.AddSingleton<IPipelineStep, SanitizeStep>();
 builder.Services.AddSingleton<IPipelineStep, EnforceStep>();
 builder.Services.AddSingleton<IPipelineStep, CallAiStep>();
 builder.Services.AddSingleton<IPipelineStep, OutputGuardStep>();
+builder.Services.AddSingleton<GdprMappingService>();
 
 // OpenAI ChatClient (valgfri: app kan starte uden key, så /analyze virker)
 string model =
@@ -195,6 +207,9 @@ app.MapPost("/chat", async (
 // ── GET /audit ───────────────────────────────────────────────────────────────
 app.MapGet("/audit", (AuditService audit) =>
     Results.Ok(audit.GetAll().OrderByDescending(e => e.Timestamp)));
+
+app.MapGet("/gdpr/map", (GdprMappingService gdpr) =>
+    Results.Ok(gdpr.BuildMap()));
 
 app.Run();
 
