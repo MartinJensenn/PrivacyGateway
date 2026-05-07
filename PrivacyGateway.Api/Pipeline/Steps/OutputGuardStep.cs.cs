@@ -50,17 +50,20 @@ public sealed class OutputGuardStep : IPipelineStep
             string.Join(", ", relevantFindings.Select(f => f.Type).Distinct())
         );
 
-        // Hvis CPR findes i svaret og BlockOnCpr er sat, bloker hele svaret
-        if (_options.BlockOnCpr && relevantFindings.Any(f => f.Type == "CPR"))
+        // Tjek om nogen af de relevante findings er af en type, som vi skal blokere på
+        var blockTypes = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
         {
-            _logger.LogError(
-                "[OutputGuard] CorrelationId={CorrelationId} — CPR fundet i AI-svar. Svaret blokeres.",
-                context.CorrelationId
-            );
-
+            [PiiDetector.Cpr] = _options.BlockOnCpr,
+            [PiiDetector.Passport] = _options.BlockOnPassport,
+            [PiiDetector.CreditCard] = _options.BlockOnCreditCard,
+            [PiiDetector.Iban] = _options.BlockOnIban,
+            [PiiDetector.DkAccount] = _options.BlockOnDkAccount,
+        };
+        if (relevantFindings.Any(f => blockTypes.TryGetValue(f.Type, out var block) && block))
+        {
             context.AiResponse = "[SVAR BLOKERET: AI-svaret indeholdt følsomme personoplysninger]";
             return Task.CompletedTask;
-        }
+        };        
 
         // Ellers: sanitér de relevante findings
         context.AiResponse = _sanitizer.Sanitize(context.AiResponse, relevantFindings);
