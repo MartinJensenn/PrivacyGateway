@@ -7,6 +7,7 @@ public sealed class IngestionPipeline
 {
     private readonly IReadOnlyList<IPipelineStep> _orderedSteps;
 
+    // Konstruktor tager en samling af IPipelineStep, sorterer dem efter Order og gemmer i en readonly liste
     public IngestionPipeline(IEnumerable<IPipelineStep> steps)
     {
         _orderedSteps = steps
@@ -14,6 +15,7 @@ public sealed class IngestionPipeline
             .ToList();
     }
 
+    // Eksekverer pipeline steps i den rigtige rækkefølge, og håndterer termination og mode-filtering
     public async Task RunAsync(PipelineContext context, CancellationToken ct)
     {
         foreach (var step in _orderedSteps)

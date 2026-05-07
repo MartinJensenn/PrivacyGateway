@@ -2,7 +2,7 @@
 
 public sealed class OutputGuardOptions
 {
-    // Hvilke PII-typer skal OutputGuard reagere på i AI-svar?
+    // En liste over PII-typer som OutputGuard skal tjekke for i AI-svaret.
     public HashSet<string> BlockedTypes { get; init; } = new(StringComparer.OrdinalIgnoreCase)
     {
         "EMAIL",

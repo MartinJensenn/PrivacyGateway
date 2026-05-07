@@ -26,6 +26,7 @@ builder.Services.AddSingleton<PolicyEngine>();
 builder.Services.AddSingleton<AuditService>();
 builder.Services.AddSingleton<FileTextExtractor>(); // Fil-tekst ekstraktion (PDF, TXT, MD, CSV)
 
+// OutputGuard konfiguration: hvilke PII-typer skal vi kigge efter i AI-svaret, og hvilke skal vi blokere på?
 builder.Services.AddSingleton(new OutputGuardOptions
 {
     BlockedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -66,15 +67,17 @@ string model =
     ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
     ?? "gpt-4o-mini";
 
+// Prøv først at hente API-nøglen fra konfiguration (appsettings, user secrets, env vars osv.) — så fallback til direkte miljøvariabel
 string? apiKey =
     builder.Configuration["OpenAI:ApiKey"]
     ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-
+// Hvis der er en API-nøgle, så registrer ChatClient i DI — ellers starter appen uden AI-integration
 if (!string.IsNullOrWhiteSpace(apiKey))
     builder.Services.AddSingleton(new ChatClient(model, new ApiKeyCredential(apiKey)));
 
 var app = builder.Build();
 
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -190,12 +193,14 @@ app.MapPost("/chat", async (
     await pipeline.RunAsync(context, ct);
     audit.Record(context);
 
+    // Hvis pipeline fejlede (fx pga. OpenAI-fejl, eller fordi OutputGuard blokerede AI-svaret), så returner en 400/500 med fejlbeskederne i response body.
     if (context.FailureStatusCode.HasValue)
         return Results.Problem(
             title: "Pipeline error",
             detail: string.Join("; ", context.Errors),
             statusCode: context.FailureStatusCode.Value);
 
+    // Hvis pipeline lykkedes, returner AI-svaret + metadata om beslutning, fundne PII'er osv.
     return Results.Ok(new ChatResponse(
         Decision: context.Decision,
         Reason: context.Reason,

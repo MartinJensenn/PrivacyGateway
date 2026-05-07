@@ -18,6 +18,8 @@ public sealed class CallAiStep : IPipelineStep
     public int Order => 60;
     public PipelineMode AppliesTo => PipelineMode.Chat;
 
+    // ExecuteAsync kalder OpenAI's chat completion API med den sanitiserede tekst, og gemmer AI'ens svar i konteksten.
+    // Hvis der opstår fejl (fx rate limit), opdateres konteksten med en failure status.
     public async Task ExecuteAsync(PipelineContext context, CancellationToken ct)
     {
         if (context.IsTerminated) return;
@@ -28,6 +30,7 @@ public sealed class CallAiStep : IPipelineStep
             return;
         }
 
+        // For at sikre at AI'en ikke forsøger at rekonstruere eller gætte på de anonymiserede tokens,
         try
         {
             var systemMessage = ChatMessage.CreateSystemMessage
@@ -38,6 +41,7 @@ public sealed class CallAiStep : IPipelineStep
             var userMessage = ChatMessage.CreateUserMessage(context.SanitizedText);
             var completion = await _client.CompleteChatAsync
                 (new[] { userMessage }, cancellationToken: ct);
+
 
             context.AiResponse = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
         }

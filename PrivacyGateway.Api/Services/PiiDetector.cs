@@ -64,6 +64,7 @@ public sealed class PiiDetector
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled)),
     ];
 
+    // Returnerer alle fundne PII-forekomster i teksten, uden overlap (beholder "bedste" match ved overlap)
     public IReadOnlyList<Finding> FindAll(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))

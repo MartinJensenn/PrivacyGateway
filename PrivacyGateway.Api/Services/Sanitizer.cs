@@ -10,7 +10,7 @@ public sealed class Sanitizer
         if (string.IsNullOrEmpty(text) || findings.Count == 0)
             return text ?? string.Empty;
 
-        // Tildel tokens stabilt (venstre->højre)
+        // Opret tokens for hver fundet PII-segment, og hold styr på tællere for hver type
         var counters = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var tokenized = findings
             .OrderBy(f => f.Start)
@@ -24,7 +24,7 @@ public sealed class Sanitizer
             })
             .ToList();
 
-        // Erstat bagfra så indekser ikke flytter sig
+        // Erstat fundne PII-segmenter med tokens i teksten
         var sb = new StringBuilder(text);
 
         foreach (var item in tokenized.OrderByDescending(x => x.Finding.Start))

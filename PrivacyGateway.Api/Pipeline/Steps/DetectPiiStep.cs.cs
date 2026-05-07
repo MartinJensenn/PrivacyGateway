@@ -4,6 +4,7 @@ using PrivacyGateway.Api.Services;
 
 namespace PrivacyGateway.Api.Pipeline.Steps;
 
+// DetectPiiStep er ansvarlig for at analysere den udtrukne tekst og finde alle forekomster af PII, som derefter gemmes i konteksten som "Findings".
 public sealed class DetectPiiStep : IPipelineStep
 {
     private readonly PiiDetector _detector;
@@ -14,6 +15,7 @@ public sealed class DetectPiiStep : IPipelineStep
     public int Order => 20;
     public PipelineMode AppliesTo => PipelineMode.Analyze | PipelineMode.Chat;
 
+    // ExecuteAsync bruger PiiDetector til at finde alle PII-findings i den udtrukne tekst, og gemmer dem i konteksten.
     public Task ExecuteAsync(PipelineContext context, CancellationToken ct)
     {
         context.Findings = _detector.FindAll(context.ExtractedText);

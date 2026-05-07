@@ -51,12 +51,15 @@ public sealed class PolicyEngine
             .OrderBy(t => t)
             .ToList();
 
+        
         if (blockedFound.Count > 0)
         {
+            // Hvis der er fundet BLOCK-typer, så blokér og angiv præcis hvilke typer der udløste blokeringen
             var reason = blockedFound.Count == 1
                 ? $"{blockedFound[0]} detected — request blocked by policy"
                 : $"Multiple sensitive types detected ({string.Join(", ", blockedFound)}) — request blocked by policy";
 
+            // Blokér uden sanitering, da BLOCK-typer ikke kan eller skal saniteres
             return new PolicyDecision(
                 Decision: "BLOCK",
                 Reason: reason,
@@ -69,10 +72,12 @@ public sealed class PolicyEngine
         foreach (var type in foundTypes.Where(t => SanitizeTypes.Contains(t)))
             required.Add(type);
 
+        // Hvis der ikke er fundet BLOCK-typer, så tillad med påkrævet sanitering, og angiv præcis hvilke typer der kræver sanitering
         var sanitizeReason = required.Count > 0
             ? $"PII detected — sanitization required: {string.Join(", ", required.OrderBy(t => t))}"
             : "No actionable PII detected";
 
+        // Tillad med sanitering, hvis der er fundet typer som kræver det, ellers tillad uden sanitering
         return new PolicyDecision(
             Decision: "ALLOW",
             Reason: sanitizeReason,

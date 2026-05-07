@@ -4,6 +4,7 @@ using PrivacyGateway.Api.Services;
 
 namespace PrivacyGateway.Api.Pipeline.Steps;
 
+// OutputGuardStep kører efter AI-svaret er modtaget, og tjekker om svaret indeholder PII, som vi ikke vil have lækket.
 public sealed class OutputGuardStep : IPipelineStep
 {
     private readonly PiiDetector _detector;
@@ -11,6 +12,7 @@ public sealed class OutputGuardStep : IPipelineStep
     private readonly ILogger<OutputGuardStep> _logger;
     private readonly OutputGuardOptions _options;
 
+    // Konstruktor tager de nødvendige services og options via dependency injection
     public OutputGuardStep(
         PiiDetector detector,
         Sanitizer sanitizer,
@@ -59,8 +61,10 @@ public sealed class OutputGuardStep : IPipelineStep
             [PiiDetector.Iban] = _options.BlockOnIban,
             [PiiDetector.DkAccount] = _options.BlockOnDkAccount,
         };
+
         if (relevantFindings.Any(f => blockTypes.TryGetValue(f.Type, out var block) && block))
         {
+            // Log en fejl — AI'en forsøgte at lække følsomme personoplysninger
             context.AiResponse = "[SVAR BLOKERET: AI-svaret indeholdt følsomme personoplysninger]";
             return Task.CompletedTask;
         };        
