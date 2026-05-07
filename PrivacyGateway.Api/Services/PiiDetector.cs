@@ -83,7 +83,7 @@ public sealed class PiiDetector
         if (candidates.Count == 0)
             return Array.Empty<Finding>();
 
-        // Sort�r venstre->h�jre, og foretr�k l�ngere match ved samme start
+        // Sorter fundne matches: først på startposition, så på længde (længere først for samme start)
         var ordered = candidates
             .OrderBy(f => f.Start)
             .ThenByDescending(f => f.Length)

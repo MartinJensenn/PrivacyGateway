@@ -29,7 +29,10 @@ public sealed class PrivacyGatewayClient
         var resp = await http.PostAsJsonAsync("/chat", new ChatRequest(text));
 
         if (!resp.IsSuccessStatusCode)
-            throw new Exception(await resp.Content.ReadAsStringAsync());
+            throw new HttpRequestException(
+                await resp.Content.ReadAsStringAsync(),
+                inner: null,
+                statusCode: resp.StatusCode);
 
         return (await resp.Content.ReadFromJsonAsync<ChatResponse>())!;
     }

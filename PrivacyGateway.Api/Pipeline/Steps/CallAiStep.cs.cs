@@ -30,8 +30,15 @@ public sealed class CallAiStep : IPipelineStep
 
         try
         {
+            var systemMessage = ChatMessage.CreateSystemMessage
+                ("Du er en hjælpsom assistent. Teksten du modtager kan indeholde " +
+                "anonymiserede tokens (fx <EMAIL_1>, <PHONE_1>). " +
+                "Forsøg aldrig at rekonstruere, gætte eller udfylde disse tokens.");
+
             var userMessage = ChatMessage.CreateUserMessage(context.SanitizedText);
-            var completion = await _client.CompleteChatAsync(new[] { userMessage }, cancellationToken: ct);
+            var completion = await _client.CompleteChatAsync
+                (new[] { userMessage }, cancellationToken: ct);
+
             context.AiResponse = completion.Value.Content.FirstOrDefault()?.Text ?? string.Empty;
         }
         catch (ClientResultException ex) when (ex.Status == 429)

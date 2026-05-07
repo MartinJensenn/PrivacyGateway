@@ -9,10 +9,10 @@ public sealed class OutputGuardOptions
         "PHONE",
         "CPR",
         "IBAN",
-        "CreditCard",
-        "Passport",
-        "DkAccount",
-        "IpAddress",
+        "CREDIT_CARD",
+        "PASSPORT",
+        "DK_ACCOUNT",
+        "IP_ADDRESS",
         "CVR",
         "URL"
     };
