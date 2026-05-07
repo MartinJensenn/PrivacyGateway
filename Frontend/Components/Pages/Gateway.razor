@@ -434,7 +434,11 @@
 
     private async Task ChatSend()
     {
-        if (string.IsNullOrWhiteSpace(_chatInput)) return;
+        if (string.IsNullOrWhiteSpace(_chatInput))
+        {
+            _chatError = "Skriv noget tekst før du sender.";
+            return;
+        }
         _chatError = null;
         _chatLoading = true;
         var text = _chatInput;
