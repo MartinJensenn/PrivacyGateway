@@ -18,8 +18,9 @@ public sealed class GdprMappingService
             Component: "DetectPiiStep · PiiDetector",
             Articles: ["Art. 4(1)", "Art. 5(1)(c)"],
             Principles: ["Dataminimering"],
-            Description: "Systemet scanner al tekst for personoplysninger (e-mail, telefon, CPR m.fl.) " +
-                         "inden noget sendes videre. Dette sikrer, at kun nødvendige data behandles.",
+            Description: "Systemet scanner al tekst for 10 PII-typer (EMAIL, PHONE, CPR, IBAN, " +
+                         "CREDIT_CARD, PASSPORT, DK_ACCOUNT, CVR, IP_ADDRESS, URL) inden noget sendes videre. " +
+                         "Overlappende matches håndteres ved at beholde det længste/bedste match.",
             Coverage: CoverageLevel.Covered
         ),
 
@@ -29,8 +30,9 @@ public sealed class GdprMappingService
             Component: "SanitizeStep · Sanitizer",
             Articles: ["Art. 4(5)", "Art. 5(1)(c)", "Art. 32(1)(a)"],
             Principles: ["Dataminimering", "Integritet og fortrolighed"],
-            Description: "Personoplysninger erstattes med strukturerede tokens (<EMAIL_1>, <CPR_1>). " +
-                         "GDPR art. 4(5) definerer pseudonymisering som en anerkendt beskyttelsesforanstaltning.",
+            Description: "Personoplysninger erstattes med strukturerede tokens (<EMAIL_1>, <PHONE_1> osv.) " +
+                         "inden AI-kaldet. Sanitering sker kun for ALLOW-requests — ingen rå personoplysninger " +
+                         "sendes til AI-tjenesten.",
             Coverage: CoverageLevel.Covered
         ),
 
@@ -40,19 +42,21 @@ public sealed class GdprMappingService
             Component: "EvaluatePolicyStep · PolicyEngine · EnforceStep",
             Articles: ["Art. 5(1)(b)", "Art. 9(1)", "Art. 32"],
             Principles: ["Formålsbegrænsning", "Særlige kategorier"],
-            Description: "CPR, IBAN, kreditkort og pasnumre blokeres automatisk. " +
-                         "Systemet håndhæver, at følsomme oplysninger aldrig videregives til AI-tjenesten.",
+            Description: "Requests der indeholder kritiske PII-typer (CPR, IBAN, kreditkort, pas, DK-konto) " +
+                         "blokeres automatisk på inputniveau — teksten når aldrig AI-tjenesten. " +
+                         "Øvrige PII-typer medfører ALLOW med påkrævet sanitering.",
             Coverage: CoverageLevel.Covered
         ),
 
         new(
             Id: "output-guard",
             Feature: "OutputGuard (AI-svar scanning)",
-            Component: "OutputGuardStep",
+            Component: "OutputGuardStep · OutputGuardOptions",
             Articles: ["Art. 5(1)(f)", "Art. 32"],
             Principles: ["Integritet og fortrolighed"],
-            Description: "AI-modellens svar scannes for PII, inden det returneres til brugeren. " +
-                         "Sikrer, at AI ikke lækker oplysninger den er blevet bedt om at holde fortrolige.",
+            Description: "Ekstra forsvarslag: AI-modellens svar scannes for PII inden det returneres til brugeren. " +
+                         "Svar der indeholder kritiske typer blokeres, øvrige fund saniteres. " +
+                         "Sikrer at AI ikke lækker oplysninger selv ved uventet modeladfærd.",
             Coverage: CoverageLevel.Covered
         ),
 
@@ -96,30 +100,8 @@ public sealed class GdprMappingService
             Articles: ["Art. 5(1)(e)"],
             Principles: ["Opbevaringsbegrænsning"],
             Description: "Audit-loggen er in-memory og nulstilles ved genstart. " +
-                         "Der er endnu ikke implementeret formel opbevaringspolitik eller sletterutine.",
+                         "Der er ikke implementeret formel opbevaringspolitik eller sletterutine.",
             Coverage: CoverageLevel.Partial
-        ),
-
-        new(
-            Id: "consent",
-            Feature: "Samtykke / Retsgrundlag",
-            Component: "(ikke implementeret)",
-            Articles: ["Art. 6(1)", "Art. 7"],
-            Principles: ["Lovlighed, rimelighed og gennemsigtighed"],
-            Description: "POC'en demonstrerer teknisk beskyttelse, men implementerer ikke " +
-                         "et formelt samtykke- eller retsgrundlagsflow. Kræves i produktion.",
-            Coverage: CoverageLevel.NotCovered
-        ),
-
-        new(
-            Id: "data-subject-rights",
-            Feature: "Registreredes rettigheder",
-            Component: "(ikke implementeret)",
-            Articles: ["Art. 15–22"],
-            Principles: ["Registreredes rettigheder"],
-            Description: "Indsigt, berigtigelse, sletning og dataportabilitet er ikke implementeret. " +
-                         "Relevant hvis systemet gemmer behandlede data i produktion.",
-            Coverage: CoverageLevel.NotCovered
         ),
     ];
 
@@ -157,7 +139,8 @@ public sealed class GdprMappingService
             PolicyOutcome: "BLOCK",
             RiskLevel: RiskLevel.Critical,
             Rationale: "Det danske CPR-nummer er en national identifikator med særlig beskyttelse. " +
-                       "Databeskyttelseslovens § 11 begrænser kraftigt behandlingsadgang. Altid BLOCK."
+                       "Databeskyttelseslovens § 11 begrænser kraftigt behandlingsadgangen. " +
+                       "Requests med CPR blokeres på inputniveau — teksten når aldrig AI-tjenesten."
         ),
 
         new(
@@ -168,7 +151,8 @@ public sealed class GdprMappingService
             PolicyOutcome: "BLOCK",
             RiskLevel: RiskLevel.Critical,
             Rationale: "Bankkontonumre udgør finansielle personoplysninger med høj misbrug-risiko. " +
-                       "Videresendelse til AI-tjeneste har intet legitimt formål i dette system."
+                       "Videresendelse til en AI-tjeneste har intet legitimt formål i dette system. " +
+                       "Blokeres på inputniveau."
         ),
 
         new(
@@ -179,7 +163,8 @@ public sealed class GdprMappingService
             PolicyOutcome: "BLOCK",
             RiskLevel: RiskLevel.Critical,
             Rationale: "Kreditkortnumre er reguleret af både GDPR og PCI-DSS. " +
-                       "Eksponering for AI-tjenester er uacceptabel sikkerhedsrisiko."
+                       "Eksponering for AI-tjenester er uacceptabel sikkerhedsrisiko. " +
+                       "Blokeres på inputniveau."
         ),
 
         new(
@@ -190,7 +175,8 @@ public sealed class GdprMappingService
             PolicyOutcome: "BLOCK",
             RiskLevel: RiskLevel.High,
             Rationale: "Pasnumre er officielle identifikationsdokumenter. " +
-                       "Behandling kræver specifikt retsgrundlag — ikke tilgængeligt i dette POC."
+                       "Behandling kræver specifikt retsgrundlag — ikke tilgængeligt i dette POC. " +
+                       "Blokeres på inputniveau."
         ),
 
         new(
@@ -201,7 +187,7 @@ public sealed class GdprMappingService
             PolicyOutcome: "BLOCK",
             RiskLevel: RiskLevel.Critical,
             Rationale: "Danske bankregistrerings- og kontonumre kan bruges til direkte finansiel svindel. " +
-                       "Behandles som kritiske og blokeres altid."
+                       "Blokeres på inputniveau — teksten når aldrig AI-tjenesten."
         ),
 
         new(
