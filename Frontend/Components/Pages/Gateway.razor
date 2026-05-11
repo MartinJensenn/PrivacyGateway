@@ -191,7 +191,7 @@
                     <div class="pg-empty-desc">Gateway'en scanner for PII, saniterer og håndhæver policy — alt på backend, inden noget sendes videre.</div>
                     <div class="pg-chips">
                         <div class="pg-chip" @onclick='() => _chatInput = "Kontakt mig på peter@firma.dk eller ring på 23 45 67 89"'>E-mail og telefon</div>
-                        <div class="pg-chip" @onclick='() => _chatInput = "Patientens CPR er 010190-1234"'>CPR (blokeres)</div>
+                        <div class="pg-chip" @onclick='() => _chatInput = "Patientens CPR er 010190-1234"'>CPR-Nummer</div>
                         <div class="pg-chip" @onclick='() => _chatInput = "Hvad er en god opskrift på rugbrød?"'>Ingen PII</div>
                     </div>
                 </div>
@@ -239,6 +239,22 @@
                         </div>
                     }
 
+                    @{
+                        var criticalTypes = new[] { "CPR", "IBAN", "CREDIT_CARD", "PASSPORT", "DK_ACCOUNT" };
+                        var criticalFound = msg.Analysis.Findings
+                        .Select(f => f.Type)
+                        .Where(t => criticalTypes.Contains(t))
+                        .Distinct()
+                        .ToList();
+                    }
+                    @if (criticalFound.Any() && msg.Analysis.Decision == "ALLOW")
+                    {
+                        <div style="background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:6px;
+                            padding:10px 14px;font-size:12px;color:var(--warn);font-family:var(--mono);">
+                            ⚠️ Kritiske personoplysninger fundet og pseudonymiseret: <strong>@string.Join(", ", criticalFound)</strong>
+                        </div>
+                    }
+
                     @if (msg.AiResponse != null)
                     {
                         <div class="pg-meta">AI · Privacy Gateway</div>
@@ -275,7 +291,7 @@
                 </div>
                 <div class="pg-btn-row">
                     <button class="pg-btn-sm" @onclick="ChatAnalyze"
-                            disabled="@(_chatLoading || string.IsNullOrWhiteSpace(_chatInput))">🔍 Analyser</button>
+                            disabled="@(_chatLoading || string.IsNullOrWhiteSpace(_chatInput))"> Analyser</button>
                     <button class="pg-btn-sm pg-btn-reset" @onclick="ChatReset"
                             disabled="@(_chatLoading || (_chatMessages.Count == 0 && string.IsNullOrWhiteSpace(_chatInput)))">Ryd</button>
                 </div>
@@ -399,7 +415,7 @@
 
     private string _tab = "chat";
 
-    // ── Chat ──────────────────────────────────────────────────────────────────
+    // ── Chat ────────────────────────────────────────────────────────────────── 
 
     private string  _chatInput   = "";
     private bool    _chatLoading;

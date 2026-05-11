@@ -12,11 +12,7 @@ public sealed class PolicyEngine
     // PII-typer der altid medfører BLOCK, uanset hvad der ellers er i teksten
     private static readonly IReadOnlySet<string> BlockedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        PiiDetector.Cpr,
-        PiiDetector.Iban,
-        PiiDetector.CreditCard,
-        PiiDetector.Passport,
-        PiiDetector.DkAccount,
+
     };
 
     // PII-typer der medfører ALLOW med påkrævet sanitering
@@ -27,6 +23,11 @@ public sealed class PolicyEngine
         PiiDetector.Cvr,
         PiiDetector.IpAddress,
         PiiDetector.Url,
+        PiiDetector.Cpr,
+        PiiDetector.Iban,
+        PiiDetector.CreditCard,
+        PiiDetector.Passport,
+        PiiDetector.DkAccount,
     };
 
     public PolicyDecision Decide(IReadOnlyList<Finding> findings)
