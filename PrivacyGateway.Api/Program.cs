@@ -88,7 +88,7 @@ app.UseHttpsRedirection();
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
-// ── POST /analyze ────────────────────────────────────────────────────────────
+// ── POST /analyze 
 app.MapPost("/analyze", async (
     AnalyzeRequest req,
     IngestionPipeline pipeline,
@@ -112,7 +112,7 @@ app.MapPost("/analyze", async (
         Findings: context.Findings));
 });
 
-// ── POST /analyze/files ──────────────────────────────────────────────────────
+// ── POST /analyze/files 
 // Accepterer én eller flere filer (multipart/form-data).
 // Understøtter: .pdf, .txt, .md, .csv, .log
 // Returnerer et array af FileAnalyzeResult — ét pr. fil.
@@ -182,7 +182,7 @@ app.MapPost("/analyze/files", async (
     return Results.Ok(results);
 });
 
-// ── POST /chat ───────────────────────────────────────────────────────────────
+// ── POST /chat 
 app.MapPost("/chat", async (
     ChatRequest req,
     IngestionPipeline pipeline,
@@ -209,7 +209,7 @@ app.MapPost("/chat", async (
         AiResponse: context.AiResponse));
 });
 
-// ── GET /audit ───────────────────────────────────────────────────────────────
+// ── GET /audit 
 app.MapGet("/audit", (AuditService audit) =>
     Results.Ok(audit.GetAll().OrderByDescending(e => e.Timestamp)));
 
@@ -218,7 +218,7 @@ app.MapGet("/gdpr/map", (GdprMappingService gdpr) =>
 
 app.Run();
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers 
 static FileAnalyzeResult FileError(string name, long size, string error) =>
     new(FileName: name,
         FileSizeBytes: size,
