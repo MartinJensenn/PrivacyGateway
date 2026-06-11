@@ -30,7 +30,7 @@ public sealed class FileTextExtractor
         };
     }
 
-    // ── PDF ─────────────────────────────────────────────────────────────────
+    // ── PDF 
 
     private static (string, string?) ExtractPdf(Stream stream, string fileName)
     {
@@ -55,7 +55,7 @@ public sealed class FileTextExtractor
         }
     }
 
-    // ── Plain text (TXT, MD, CSV, LOG) ──────────────────────────────────────
+    // ── Plain text (TXT, MD, CSV, LOG) 
 
     private static (string, string?) ExtractPlainText(Stream stream, string fileName)
     {

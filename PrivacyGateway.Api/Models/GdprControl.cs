@@ -1,6 +1,6 @@
 namespace PrivacyGateway.Api.Models;
 
-// ── Enums ─────────────────────────────────────────────────────────────────────
+// ── Enums 
 
 public enum CoverageLevel
 {
@@ -17,7 +17,7 @@ public enum RiskLevel
     Critical
 }
 
-// ── System control: feature → GDPR-artikel(er) ───────────────────────────────
+// ── System control: feature → GDPR-artikel(er) 
 
 public sealed record GdprSystemControl(
     string Id,
@@ -29,7 +29,7 @@ public sealed record GdprSystemControl(
     CoverageLevel Coverage
 );
 
-// ── PII-type klassifikation ───────────────────────────────────────────────────
+// ── PII-type klassifikation 
 
 public sealed record GdprPiiClassification(
     string PiiType,
@@ -41,7 +41,7 @@ public sealed record GdprPiiClassification(
     string Rationale
 );
 
-// ── Samlet svar fra /gdpr/map ─────────────────────────────────────────────────
+// ── Samlet svar fra /gdpr/map 
 
 public sealed record GdprMapResponse(
     IReadOnlyList<GdprSystemControl> SystemControls,

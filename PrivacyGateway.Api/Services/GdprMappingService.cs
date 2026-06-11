@@ -8,7 +8,7 @@ namespace PrivacyGateway.Api.Services;
 /// </summary>
 public sealed class GdprMappingService
 {
-    // ── System controls ───────────────────────────────────────────────────────
+    // ── System controls 
 
     private static readonly GdprSystemControl[] SystemControls =
     [
@@ -105,7 +105,7 @@ public sealed class GdprMappingService
         ),
     ];
 
-    // ── PII-type klassifikationer ─────────────────────────────────────────────
+    // ── PII-type klassifikationer 
 
     private static readonly GdprPiiClassification[] PiiClassifications =
     [
@@ -224,7 +224,7 @@ public sealed class GdprMappingService
         ),
     ];
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    // ── Public API 
 
     public GdprMapResponse BuildMap()
     {
