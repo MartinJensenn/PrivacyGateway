@@ -20,7 +20,7 @@ builder.Services.AddHttpClient("GatewayApi", client =>
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
-// Registrer PrivacyGatewayClient som scoped, så den kan injiceres i Razor-komponenter. Den vil bruge den named HttpClient "GatewayApi" vi lige har konfigureret.
+// Registrer PrivacyGatewayClient som scoped, så den kan injiceres i Razor-komponenter. Den vil bruge den named HttpClient "GatewayApi" jeg lige har konfigureret.
 builder.Services.AddScoped<PrivacyGatewayClient>();
 
 // Build skal komme EFTER services er registreret

@@ -4,7 +4,7 @@ using PrivacyGateway.Api.Services;
 
 namespace PrivacyGateway.Api.Pipeline.Steps;
 
-// OutputGuardStep kører efter AI-svaret er modtaget, og tjekker om svaret indeholder PII, som vi ikke vil have lækket.
+// OutputGuardStep kører efter AI-svaret er modtaget, og tjekker om svaret indeholder PII, som jeg ikke vil have lækket.
 public sealed class OutputGuardStep : IPipelineStep
 {
     private readonly PiiDetector _detector;
@@ -52,7 +52,7 @@ public sealed class OutputGuardStep : IPipelineStep
             string.Join(", ", relevantFindings.Select(f => f.Type).Distinct())
         );
 
-        // Tjek om nogen af de relevante findings er af en type, som vi skal blokere på
+        // Tjek om nogen af de relevante findings er af en type, som jeg skal blokere på
         var blockTypes = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
         {
             [PiiDetector.Cpr] = _options.BlockOnCpr,

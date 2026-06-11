@@ -90,7 +90,7 @@ public sealed class PiiDetector
             .ThenByDescending(f => f.Length)
             .ToList();
 
-        // Fjern overlappende matches (simpelt: behold f�rste/bedste pr. overlap)
+        // Fjern overlappende matches (simpelt: behold første/bedste pr. overlap)
         var result = new List<Finding>(ordered.Count);
         int lastEnd = -1;
 
@@ -103,7 +103,7 @@ public sealed class PiiDetector
                 continue;
             }
 
-            // Hvis samme start som sidste og l�ngere, s� erstat
+            // Hvis samme start som sidste og længere, så erstat
             var last = result[^1];
             if (f.Start == last.Start && f.Length > last.Length)
             {

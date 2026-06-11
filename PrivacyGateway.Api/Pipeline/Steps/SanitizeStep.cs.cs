@@ -17,7 +17,7 @@ public sealed class SanitizeStep : IPipelineStep
     // SanitizeStep erstatter PII-segmenter i den udtrukne tekst med tokens, baseret på de fundne findings og de typer, der kræves sanitization for
     public Task ExecuteAsync(PipelineContext context, CancellationToken ct)
     {
-        // Hvis der ikke er nogen typer, der kræver sanitization, skal vi ikke ændre den udtrukne tekst
+        // Hvis der ikke er nogen typer, der kræver sanitization, skal jeg ikke ændre den udtrukne tekst
         if (context.RequiredSanitizationTypes.Count == 0)
         {
             // Ingen sanitization krævet, brug den udtrukne tekst som den er
