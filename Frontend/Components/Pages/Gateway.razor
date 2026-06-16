@@ -232,7 +232,14 @@
                                     </div>
                                     <div>
                                         <div class="pg-label">Saniteret tekst</div>
-                                        <pre class="pg-sanitized">@msg.Analysis.SanitizedText</pre>
+                                        @if (msg.Analysis.Decision == "BLOCK")
+                                        {
+                                            <div class="pg-no-pii"> blokeret, ingen tekst frigivet</div>
+                                        }
+                                        else
+                                        {
+                                            <pre class="pg-sanitized">@msg.Analysis.SanitizedText</pre>
+                                        }
                                     </div>
                                 </div>
                             }
