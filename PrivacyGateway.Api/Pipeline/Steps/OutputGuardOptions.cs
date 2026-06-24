@@ -17,7 +17,6 @@ public sealed class OutputGuardOptions
         "URL"
     };
 
-    // Skal hele svaret blokeres hvis X findes, eller bare saniteres?
     public bool BlockOnCpr { get; init; } = true;
     public bool BlockOnPassport { get; init; } = true;
     public bool BlockOnCreditCard { get; init; } = true;

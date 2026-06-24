@@ -9,7 +9,7 @@ public interface IPipelineStep
     int Order { get; }
     PipelineMode AppliesTo { get; }
 
-    // The method is asynchronous and returns a Task, which allows for non-blocking execution of potentially long-running operations within the pipeline step.
+    // ExecuteAsync er en metode, der udfører logikken for dette trin i pipelinen.
     Task ExecuteAsync(PipelineContext context, CancellationToken ct);
 }
  
