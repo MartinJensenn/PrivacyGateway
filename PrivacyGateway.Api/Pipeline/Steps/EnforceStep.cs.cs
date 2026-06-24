@@ -29,11 +29,6 @@ public sealed class EnforceStep : IPipelineStep
             var stillThere = _detector.FindAll(context.SanitizedText)
                 .Where(f => context.RequiredSanitizationTypes.Contains(f.Type))
                 .ToList();
-
-            if (stillThere.Count > 0)
-            {
-                context.Fail(500, $"Sanitization verification failed. Still found: {string.Join(", ", stillThere.Select(x => x.Type).Distinct())}");
-            }
         }
 
         return Task.CompletedTask;

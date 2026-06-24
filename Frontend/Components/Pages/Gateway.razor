@@ -187,8 +187,8 @@
             @if (_chatMessages.Count == 0 && !_chatLoading)
             {
                 <div class="pg-empty">
-                    <div class="pg-empty-title">Hvad vil du sende til AI?</div>
-                    <div class="pg-empty-desc">Gateway'en scanner for PII, saniterer og håndhæver policy — alt på backend, inden noget sendes videre.</div>
+                    <div class="pg-empty-title">Hvad vil du sende til AI'en?</div>
+                    <div class="pg-empty-desc">Gateway'en scanner for PII, saniterer og håndhæver policy - Den sikre dig, at GDPR ikke er en eftertanke.</div>
                     <div class="pg-chips">
                         <div class="pg-chip" @onclick='() => _chatInput = "Kontakt mig på peter@firma.dk eller ring på 23 45 67 89"'>E-mail og telefon</div>
                         <div class="pg-chip" @onclick='() => _chatInput = "Patientens CPR er 010190-1234"'>CPR-Nummer</div>
@@ -302,7 +302,7 @@
                     <button class="pg-btn-sm pg-btn-reset" @onclick="ChatReset"
                             disabled="@(_chatLoading || (_chatMessages.Count == 0 && string.IsNullOrWhiteSpace(_chatInput)))">Ryd</button>
                 </div>
-                <div class="pg-hint">Gateway scanner og saniterer automatisk inden AI-kald · API-nøgle forlader aldrig browseren</div>
+                <div></div><div></div>
             </div>
         </div>
     }
@@ -422,7 +422,7 @@
 
     private string _tab = "chat";
 
-    // ── Chat ────────────────────────────────────────────────────────────────── 
+    // ── Chat 
 
     private string  _chatInput   = "";
     private bool    _chatLoading;
@@ -488,7 +488,7 @@
         _chatError = null;
     }
 
-    // ── Files ─────────────────────────────────────────────────────────────────
+    // ── Files 
 
     private readonly List<IBrowserFile>         _selectedFiles   = new();
     private readonly List<FileAnalyzeResult>    _fileResults     = new();
@@ -543,7 +543,7 @@
             _expandedResults.Add(r);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers
 
     private string TabClass(string tab) => _tab == tab ? "pg-tab active" : "pg-tab";
     private static string ToggleClass(bool open) => open ? "pg-toggle open" : "pg-toggle";

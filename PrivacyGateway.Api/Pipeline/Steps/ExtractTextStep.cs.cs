@@ -4,8 +4,6 @@ using PrivacyGateway.Api.Pipeline.Context;
 namespace PrivacyGateway.Api.Pipeline.Steps;
 
 // ExtractTextStep er det første step i pipelinen, og har ansvar for at validere og udtrække tekst fra den rå input.
-// I denne MVP-version antager jeg, at den rå input allerede er tekst, så jeg sætter ExtractedText direkte til RawInput.
-// I fremtiden kan dette step udvides til at håndtere forskellige inputtyper (filer, billeder, osv.) og bruge OCR eller andre teknikker til at udtrække tekst.
 public sealed class ExtractTextStep : IPipelineStep
 {
     public string Name => "ExtractText";
