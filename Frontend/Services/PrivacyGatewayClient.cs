@@ -10,7 +10,7 @@ public sealed class PrivacyGatewayClient
 
     public PrivacyGatewayClient(IHttpClientFactory factory) => _factory = factory;
 
-    // ── Text endpoints ───────────────────────────────────────────────────────
+    // ── Text endpoints 
 
     public async Task<AnalyzeResponse> AnalyzeAsync(string text)
     {
@@ -37,13 +37,8 @@ public sealed class PrivacyGatewayClient
         return (await resp.Content.ReadFromJsonAsync<ChatResponse>())!;
     }
 
-    // ── File endpoint ────────────────────────────────────────────────────────
+    // ── File endpoint 
 
-    /// <summary>
-    /// Uploader én eller flere filer til /analyze/files.
-    /// Hvert fil analyseres separat for PII og returnerer et FileAnalyzeResult.
-    /// Maks filstørrelse: 10 MB pr. fil.
-    /// </summary>
     public async Task<IReadOnlyList<FileAnalyzeResult>> AnalyzeFilesAsync(
         IReadOnlyList<IBrowserFile> files,
         CancellationToken ct = default)
@@ -87,7 +82,7 @@ public sealed class PrivacyGatewayClient
     }
 }
 
-// ── DTOs ─────────────────────────────────────────────────────────────────────
+// ── DTOs 
 // Holdes identiske med API-modellerne (samme property navne).
 
 public sealed record AnalyzeRequest(string Text);
